@@ -1,0 +1,65 @@
+candidate:
+  type: "graduate_student_early_career"
+  requires_future_sponsorship: true
+
+job_preferences:
+  job_types:
+    - full_time
+
+  experience_levels:
+    - entry_level
+    - new_graduate
+    - analyst
+    - associate
+    - professional_hiring
+
+target_roles:
+  - Financial Analyst
+  - Finance Analyst
+  - FP&A Analyst
+  - Strategic Finance Analyst
+  - Corporate Finance Analyst
+  - Corporate Development Analyst
+  - Investment Analyst
+  - Investment Banking Analyst
+  - Valuation Analyst
+  - Equity Research Analyst
+  - Research Analyst
+  - Risk Analyst
+  - Treasury Analyst
+  - Portfolio Analyst
+  - Business Analyst
+  - Data Analyst
+  - Quantitative Analyst
+
+preferred_skills:
+  - Excel
+  - PowerPoint
+  - Financial Modeling
+  - Valuation
+  - Capital IQ
+  - Bloomberg
+  - PitchBook
+  - Python
+  - SQL
+  - Tableau
+  - Power BI
+  - Statistics
+  - Data Analytics
+
+locations:
+  - United States
+
+sponsorship:
+  required: true
+
+search:
+  recent_days: 14
+  minimum_match_score: 70
+  include_professional_hiring: true
+  max_preferred_years_experience: 3
+  hard_reject_years_experience: 4
+  verify_application_page_sponsorship: true
+
+notification:
+  email: "924887271pgx@gmail.com"
