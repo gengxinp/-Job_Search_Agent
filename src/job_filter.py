@@ -7,6 +7,8 @@ import yaml
 
 REQUEST_HEADERS = {"User-Agent": "Student-Job-Search-Agent/2.0"}
 
+EXCLUDED_COMPANIES = {"spacex"}
+
 
 def load_profile():
     """
@@ -325,6 +327,10 @@ def filter_job(job, profile):
     """
     Decide whether a single job should remain.
     """
+
+    company = normalize_text(job.get("company"))
+    if any(company == excluded or company.startswith(excluded + " ") or company.startswith(excluded + ",") or company.startswith(excluded + ".") for excluded in EXCLUDED_COMPANIES):
+        return False, "Company excluded"
 
     target_roles = profile.get(
         "target_roles",

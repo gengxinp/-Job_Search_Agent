@@ -10,7 +10,7 @@ Sources currently supported: Lever, Greenhouse, and Ashby public job boards. The
 
 ## Sponsorship policy
 
-The candidate requires future employer sponsorship. Every job is classified as `Likely Sponsors`, `Sponsorship Unclear`, or `Likely Does Not Sponsor`. `Likely Does Not Sponsor` is a hard rejection: it cannot enter ranking, the tracker as a new recommendation, or the weekly email. Unclear jobs remain eligible. For unclear postings, the agent can re-check the real application page with a normal HTTP request; access failures remain `Unclear`. It never infers sponsorship from company size.
+The candidate requires future employer sponsorship. Every job is classified as `Likely Sponsors`, `Sponsorship Unclear`, `Work Authorization / Export Control Risk`, or `Likely Does Not Sponsor`. `Likely Does Not Sponsor` is a hard rejection: it cannot enter ranking, the tracker as a new recommendation, or the weekly email. `Sponsorship Unclear` jobs remain eligible. `Work Authorization / Export Control Risk` jobs remain eligible but receive lower ranking priority. For unclear postings, the agent can re-check the real application page with a normal HTTP request; access failures remain `Unclear`. It never infers sponsorship from company size.
 
 ## Setup
 
@@ -61,7 +61,7 @@ pytest -q
 
 ## Dashboard / tracker
 
-SQLite data is stored at `data/jobs.db`. The dashboard shows total jobs, new jobs this week, excellent/strong matches, sponsorship-compatible jobs, applications, and interviews. It supports filters for title/company, location, job type, sponsorship, score, and application status. Statuses are: New, Interested, Applied, Interview, Offer, Rejected, Not Interested, and Closed. Existing application status is preserved on future searches.
+SQLite data is stored at `data/jobs.db`. The dashboard shows total jobs, new jobs this week, excellent/strong matches, `Likely Sponsors`, `Sponsorship Unclear`, `Export Control Risk`, applications, and interviews. It supports filters for title/company, location, job type, sponsorship, score, and application status. Statuses are: New, Interested, Applied, Interview, Offer, Rejected, Not Interested, and Closed. Existing application status is preserved on future searches.
 
 ## Weekly email
 

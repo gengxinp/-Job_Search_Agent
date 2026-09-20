@@ -466,13 +466,10 @@ def update_application_status(
 
 def get_database_summary():
     """
-    Return simple tracker statistics.
+    Return database statistics for the job tracker.
     """
 
-    initialize_database()
-
-    connection = get_connection()
-
+    connection = sqlite3.connect(DATABASE_PATH)
     cursor = connection.cursor()
 
     cursor.execute(
@@ -481,7 +478,6 @@ def get_database_summary():
         FROM jobs
         """
     )
-
     total_jobs = cursor.fetchone()[0]
 
     cursor.execute(
@@ -491,7 +487,6 @@ def get_database_summary():
         WHERE application_status = 'New'
         """
     )
-
     new_jobs = cursor.fetchone()[0]
 
     cursor.execute(
@@ -501,10 +496,7 @@ def get_database_summary():
         WHERE match_score >= 90
         """
     )
-
-    excellent_matches = (
-        cursor.fetchone()[0]
-    )
+    excellent_matches = cursor.fetchone()[0]
 
     cursor.execute(
         """
@@ -514,20 +506,34 @@ def get_database_summary():
         AND match_score < 90
         """
     )
-
-    strong_matches = (
-        cursor.fetchone()[0]
-    )
+    strong_matches = cursor.fetchone()[0]
 
     cursor.execute(
         """
         SELECT COUNT(*)
         FROM jobs
-        WHERE COALESCE(sponsorship_status, '') NOT LIKE '%Does Not Sponsor%'
+        WHERE sponsorship_status = 'Likely Sponsors'
         """
     )
+    likely_sponsors = cursor.fetchone()[0]
 
-    sponsorship_compatible_jobs = cursor.fetchone()[0]
+    cursor.execute(
+        """
+        SELECT COUNT(*)
+        FROM jobs
+        WHERE sponsorship_status = 'Sponsorship Unclear'
+        """
+    )
+    sponsorship_unclear = cursor.fetchone()[0]
+
+    cursor.execute(
+        """
+        SELECT COUNT(*)
+        FROM jobs
+        WHERE sponsorship_status = 'Work Authorization / Export Control Risk'
+        """
+    )
+    export_control_risk = cursor.fetchone()[0]
 
     cursor.execute(
         """
@@ -536,10 +542,7 @@ def get_database_summary():
         WHERE application_status = 'Applied'
         """
     )
-
-    applications_submitted = (
-        cursor.fetchone()[0]
-    )
+    applications_submitted = cursor.fetchone()[0]
 
     cursor.execute(
         """
@@ -548,26 +551,20 @@ def get_database_summary():
         WHERE application_status = 'Interview'
         """
     )
-
-    interviews = (
-        cursor.fetchone()[0]
-    )
+    interviews = cursor.fetchone()[0]
 
     connection.close()
 
     return {
         "total_jobs": total_jobs,
         "new_jobs": new_jobs,
-        "excellent_matches":
-            excellent_matches,
-        "strong_matches":
-            strong_matches,
-        "sponsorship_compatible_jobs":
-            sponsorship_compatible_jobs,
-        "applications_submitted":
-            applications_submitted,
-        "interviews":
-            interviews
+        "excellent_matches": excellent_matches,
+        "strong_matches": strong_matches,
+        "likely_sponsors": likely_sponsors,
+        "sponsorship_unclear": sponsorship_unclear,
+        "export_control_risk": export_control_risk,
+        "applications_submitted": applications_submitted,
+        "interviews": interviews,
     }
 
 
@@ -579,9 +576,7 @@ def display_database_summary():
     summary = get_database_summary()
 
     print()
-    print(
-        "=== Job Tracker Database ==="
-    )
+    print("=== Job Tracker Database ===")
     print()
 
     print(
@@ -605,8 +600,18 @@ def display_database_summary():
     )
 
     print(
-        f"Sponsorship-Compatible Jobs: "
-        f"{summary['sponsorship_compatible_jobs']}"
+        f"Likely Sponsors: "
+        f"{summary['likely_sponsors']}"
+    )
+
+    print(
+        f"Sponsorship Unclear: "
+        f"{summary['sponsorship_unclear']}"
+    )
+
+    print(
+        f"Export Control Risk: "
+        f"{summary['export_control_risk']}"
     )
 
     print(

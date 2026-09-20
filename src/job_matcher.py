@@ -660,7 +660,15 @@ def score_education(job, resume_data):
 
 def score_sponsorship(job, profile):
     """
-    Maximum: 5
+    Maximum: 5.
+
+    Sponsorship priority for a candidate who requires
+    future employer sponsorship:
+
+    Likely Sponsors       -> 5
+    Sponsorship Unclear   -> 3
+    Export Control Risk   -> 0
+    Likely Does Not Sponsor -> 0
     """
 
     requires_sponsorship = (
@@ -674,12 +682,8 @@ def score_sponsorship(job, profile):
 
     sponsorship = normalize_text(job.get("sponsorship"))
 
-    positive_terms = [
-        "likely sponsors",
-        "sponsorship available",
-        "visa sponsorship available",
-        "will sponsor"
-    ]
+    if "export control risk" in sponsorship:
+        return 0
 
     negative_terms = [
         "does not sponsor",
@@ -693,6 +697,13 @@ def score_sponsorship(job, profile):
 
     if any(term in sponsorship for term in negative_terms):
         return 0
+
+    positive_terms = [
+        "likely sponsors",
+        "sponsorship available",
+        "visa sponsorship available",
+        "will sponsor"
+    ]
 
     if any(term in sponsorship for term in positive_terms):
         return 5
@@ -943,6 +954,11 @@ def build_match_reason(
     if "likely sponsors" in sponsorship:
         reasons.append(
             "positive sponsorship indication"
+        )
+
+    elif "export control risk" in sponsorship:
+        reasons.append(
+            "export-control or work-authorization restrictions require careful verification"
         )
 
     elif "unclear" in sponsorship:

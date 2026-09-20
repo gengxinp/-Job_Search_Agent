@@ -234,20 +234,17 @@ def calculate_email_ranking_score(job):
     Resume Match Score
     + Finance Role Priority
     + Seniority Adjustment
+    + Sponsorship / Work Authorization Adjustment
 
-    Example:
+    Sponsorship priority:
 
-    FP&A Analyst
-    Resume score = 77
-    Role priority = +30
-    Email ranking = 107
+    Likely Sponsors          -> +10
+    Sponsorship Unclear      -> 0
+    Export Control Risk      -> -25
+    Likely Does Not Sponsor  -> -100
 
-    Business Analyst
-    Resume score = 80
-    Role priority = +10
-    Email ranking = 90
-
-    The FP&A role therefore appears first in the email.
+    This adjustment affects Weekly Email ordering only.
+    It does not modify the stored resume match score.
     """
 
     base_score = int(
@@ -268,10 +265,33 @@ def calculate_email_ranking_score(job):
         )
     )
 
+    sponsorship = str(
+        job.get(
+            "sponsorship_status",
+            job.get(
+                "sponsorship",
+                ""
+            )
+        )
+        or ""
+    ).lower().strip()
+
+    sponsorship_adjustment = 0
+
+    if "likely sponsors" in sponsorship:
+        sponsorship_adjustment = 10
+
+    elif "export control risk" in sponsorship:
+        sponsorship_adjustment = -25
+
+    elif "does not sponsor" in sponsorship:
+        sponsorship_adjustment = -100
+
     return (
         base_score
         + role_priority
         + seniority_penalty
+        + sponsorship_adjustment
     )
 
 
