@@ -23,10 +23,10 @@ jobs:
 
       - name: Restore resume
         env:
-          RESUME_BASE64: ${{ secrets.RESUME_BASE64 }}
+          RESUME_TEXT: ${{ secrets.RESUME_TEXT }}
         run: |
           mkdir -p data/resume
-          echo "$RESUME_BASE64" | base64 --decode > "data/resume/Pu Gengxin USC Resume.pdf"
+          printf '%s' "$RESUME_TEXT" > "data/resume/resume.txt"
 
       - name: Run weekly job search
         run: python run_weekly.py
