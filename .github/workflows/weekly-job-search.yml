@@ -8,13 +8,28 @@ on:
 jobs:
   weekly-search:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install -r requirements.txt
-      - run: python run_weekly.py
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Restore resume
+        env:
+          RESUME_BASE64: ${{ secrets.RESUME_BASE64 }}
+        run: |
+          mkdir -p data/resume
+          echo "$RESUME_BASE64" | base64 --decode > "data/resume/Pu Gengxin USC Resume.pdf"
+
+      - name: Run weekly job search
+        run: python run_weekly.py
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           OPENAI_MODEL: gpt-5.6-luna
