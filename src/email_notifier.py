@@ -15,7 +15,11 @@ from dotenv import load_dotenv
 # ============================================================
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-DATABASE_PATH = BASE_DIR / "data" / "jobs.db"
+
+DATA_DIR = BASE_DIR / "data"
+DATA_DIR.mkdir(parents=True, exist_ok=True)
+
+DATABASE_PATH = DATA_DIR / "jobs.db"
 CONFIG_PATH = BASE_DIR / "config" / "profile.yaml"
 ENV_PATH = BASE_DIR / ".env"
 
@@ -414,10 +418,20 @@ def get_category(score):
 def summarize_weekly_jobs(jobs):
     return {
         "new_jobs": len(jobs),
-        "excellent": sum(int(j.get("match_score", 0) or 0) >= 90 for j in jobs),
-        "strong": sum(80 <= int(j.get("match_score", 0) or 0) < 90 for j in jobs),
+        "excellent": sum(
+            int(j.get("match_score", 0) or 0) >= 90
+            for j in jobs
+        ),
+        "strong": sum(
+            80 <= int(j.get("match_score", 0) or 0) < 90
+            for j in jobs
+        ),
         "potential_sponsorship": sum(
-            j.get("sponsorship_status") in {"Likely Sponsors", "Sponsorship Unclear"}
+            j.get("sponsorship_status")
+            in {
+                "Likely Sponsors",
+                "Sponsorship Unclear"
+            }
             for j in jobs
         ),
     }
@@ -448,10 +462,20 @@ def build_plain_text_report(jobs):
     lines.append("")
 
     summary = summarize_weekly_jobs(jobs)
-    lines.append(f"New Jobs Found: {summary['new_jobs']}")
-    lines.append(f"Excellent Matches: {summary['excellent']}")
-    lines.append(f"Strong Matches: {summary['strong']}")
-    lines.append(f"Potential Sponsorship Matches: {summary['potential_sponsorship']}")
+
+    lines.append(
+        f"New Jobs Found: {summary['new_jobs']}"
+    )
+    lines.append(
+        f"Excellent Matches: {summary['excellent']}"
+    )
+    lines.append(
+        f"Strong Matches: {summary['strong']}"
+    )
+    lines.append(
+        "Potential Sponsorship Matches: "
+        f"{summary['potential_sponsorship']}"
+    )
     lines.append("")
 
     for index, job in enumerate(
@@ -687,6 +711,10 @@ def build_html_report(jobs):
             """
         )
 
+    summary = summarize_weekly_jobs(
+        jobs
+    )
+
     return f"""
     <html>
 
@@ -701,12 +729,26 @@ def build_html_report(jobs):
             Weekly AI Job Search Report
         </h2>
 
-        <p>Your top {len(jobs)} new opportunities, prioritized for finance career relevance.</p>
         <p>
-            <strong>New Jobs Found:</strong> {summarize_weekly_jobs(jobs)['new_jobs']} &nbsp;|&nbsp;
-            <strong>Excellent:</strong> {summarize_weekly_jobs(jobs)['excellent']} &nbsp;|&nbsp;
-            <strong>Strong:</strong> {summarize_weekly_jobs(jobs)['strong']} &nbsp;|&nbsp;
-            <strong>Potential Sponsorship:</strong> {summarize_weekly_jobs(jobs)['potential_sponsorship']}
+            Your top {len(jobs)} new opportunities,
+            prioritized for finance career relevance.
+        </p>
+
+        <p>
+            <strong>New Jobs Found:</strong>
+            {summary['new_jobs']}
+            &nbsp;|&nbsp;
+
+            <strong>Excellent:</strong>
+            {summary['excellent']}
+            &nbsp;|&nbsp;
+
+            <strong>Strong:</strong>
+            {summary['strong']}
+            &nbsp;|&nbsp;
+
+            <strong>Potential Sponsorship:</strong>
+            {summary['potential_sponsorship']}
         </p>
 
         {''.join(cards)}
