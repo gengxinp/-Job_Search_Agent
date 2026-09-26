@@ -22,6 +22,7 @@ from ai_analyzer import analyze_job
 
 from database import (
     save_jobs,
+    sync_tracker_with_current_filters,
     display_database_summary
 )
 
@@ -390,6 +391,33 @@ def main():
     print(
         f"Existing jobs updated: "
         f"{updated_count}"
+    )
+
+    # ========================================================
+    # STEP 7B — SYNC HISTORICAL TRACKER WITH CURRENT FILTERS
+    # ========================================================
+
+    print()
+    print("=== Step 7B: Syncing Historical Job Tracker ===")
+    print()
+
+    sync_result = sync_tracker_with_current_filters(
+        profile
+    )
+
+    print(
+        f"Tracker jobs before sync: "
+        f"{sync_result['before']}"
+    )
+
+    print(
+        f"Historical jobs removed: "
+        f"{sync_result['removed']}"
+    )
+
+    print(
+        f"Tracker jobs after sync: "
+        f"{sync_result['remaining']}"
     )
 
     # ========================================================

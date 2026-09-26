@@ -7,7 +7,11 @@ import yaml
 
 REQUEST_HEADERS = {"User-Agent": "Student-Job-Search-Agent/2.0"}
 
-EXCLUDED_COMPANIES = {"spacex"}
+EXCLUDED_COMPANIES = {
+    "spacex",
+    "anduril",
+    "anduril industries",
+}
 
 
 def load_profile():

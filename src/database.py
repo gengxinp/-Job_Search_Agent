@@ -638,3 +638,90 @@ if __name__ == "__main__":
     )
 
     display_database_summary()
+
+def sync_tracker_with_current_filters(profile):
+    """
+    Remove historical tracker jobs that no longer pass the current
+    deterministic hard filters or career relevance filter.
+
+    Existing qualifying rows are left untouched, so application status,
+    email history, scores, and other tracker data are preserved.
+
+    Note: historical tracker rows do not contain the original full job
+    description, so description-only rules cannot be retroactively checked.
+    """
+
+    from job_filter import filter_job
+    from job_matcher import is_career_relevant
+
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+
+    try:
+        rows = conn.execute(
+            "SELECT * FROM jobs"
+        ).fetchall()
+
+        removed = []
+
+        for row in rows:
+            record = dict(row)
+
+            job = {
+                "company": record.get("company", ""),
+                "title": record.get("job_title", ""),
+                "location": record.get("location", ""),
+                "job_type": record.get("job_type", ""),
+                "posting_date": record.get("posting_date", ""),
+                "date_found": record.get("date_found", ""),
+                "description": "",
+                "application_url": record.get(
+                    "application_url",
+                    ""
+                ),
+                "sponsorship": record.get(
+                    "sponsorship_status",
+                    "Sponsorship Unclear"
+                ),
+            }
+
+            keep, reason = filter_job(
+                job,
+                profile
+            )
+
+            if keep and not is_career_relevant(job):
+                keep = False
+                reason = "Career filter"
+
+            if not keep:
+                removed.append(
+                    (
+                        record.get("id"),
+                        record.get("company"),
+                        record.get("job_title"),
+                        reason,
+                    )
+                )
+
+        for job_id, _, _, _ in removed:
+            conn.execute(
+                "DELETE FROM jobs WHERE id = ?",
+                (job_id,)
+            )
+
+        conn.commit()
+
+        remaining = conn.execute(
+            "SELECT COUNT(*) FROM jobs"
+        ).fetchone()[0]
+
+        return {
+            "before": len(rows),
+            "removed": len(removed),
+            "remaining": remaining,
+            "removed_jobs": removed,
+        }
+
+    finally:
+        conn.close()
