@@ -808,8 +808,8 @@ def score_recency(job):
 
 def is_career_relevant(job):
     """
-    Prevent obviously unrelated jobs from entering the
-    final ranked list.
+    Keep roles aligned with the candidate's finance / investment / analytical
+    targets while rejecting analyst titles from clearly unrelated functions.
     """
 
     title = normalize_text(job.get("title"))
@@ -817,6 +817,7 @@ def is_career_relevant(job):
     if not title:
         return False
 
+    # Clearly unrelated professions / technical functions.
     excluded = [
         "software engineer",
         "software developer",
@@ -843,18 +844,70 @@ def is_career_relevant(job):
         "recruiter",
         "talent acquisition",
         "graphic designer",
-        "product designer"
+        "product designer",
+
+        # Analyst titles that are outside the target career path.
+        "security operations center",
+        "soc analyst",
+        "cybersecurity analyst",
+        "cyber security analyst",
+        "information security analyst",
+        "systems analyst",
+        "system analyst",
+        "it analyst",
+        "information technology analyst",
+        "payroll analyst",
+        "anti-money laundering",
+        "anti money laundering",
+        "aml analyst",
+        "kyc analyst",
+        "compliance analyst",
+        "marketing analyst",
+        "people analyst",
+        "hr analyst",
+        "human resources analyst",
+        "supply chain analyst",
+        "logistics analyst",
     ]
 
     if any(term in title for term in excluded):
         return False
 
+    # Generic operations analyst roles are too broad, but keep them when the
+    # title explicitly anchors the role to a target finance/investment area.
+    if "operations analyst" in title:
+        finance_operations_terms = [
+            "finance",
+            "financial",
+            "investment",
+            "treasury",
+            "portfolio",
+            "capital markets",
+            "asset management",
+            "wealth management",
+        ]
+        if not any(term in title for term in finance_operations_terms):
+            return False
+
     relevant = [
-        "analyst",
+        "financial analyst",
+        "finance analyst",
+        "fp&a",
+        "investment analyst",
+        "investment banking",
+        "valuation",
+        "equity research",
+        "research analyst",
+        "risk analyst",
+        "treasury analyst",
+        "portfolio analyst",
+        "business analyst",
+        "data analyst",
+        "quantitative analyst",
+        "quant analyst",
         "finance",
         "financial",
         "investment",
-        "valuation",
         "research",
         "strategy",
         "strategic",
@@ -866,7 +919,8 @@ def is_career_relevant(job):
         "private equity",
         "venture capital",
         "asset management",
-        "wealth management"
+        "wealth management",
+        "revenue economics",
     ]
 
     return any(term in title for term in relevant)
