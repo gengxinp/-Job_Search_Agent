@@ -21,6 +21,14 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
+      - name: Restore job tracker database
+        uses: actions/cache/restore@v4
+        with:
+          path: data/jobs.db
+          key: job-tracker-${{ github.run_id }}
+          restore-keys: |
+            job-tracker-
+
       - name: Restore resume
         env:
           RESUME_TEXT: ${{ secrets.RESUME_TEXT }}
@@ -37,3 +45,10 @@ jobs:
           EMAIL_APP_PASSWORD: ${{ secrets.EMAIL_APP_PASSWORD }}
           SMTP_SERVER: ${{ secrets.SMTP_SERVER }}
           SMTP_PORT: ${{ secrets.SMTP_PORT }}
+
+      - name: Save job tracker database
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: data/jobs.db
+          key: job-tracker-${{ github.run_id }}
