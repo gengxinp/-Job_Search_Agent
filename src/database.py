@@ -654,7 +654,7 @@ def sync_tracker_with_current_filters(profile):
     from job_filter import filter_job
     from job_matcher import is_career_relevant
 
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DATABASE_PATH)
     conn.row_factory = sqlite3.Row
 
     try:
