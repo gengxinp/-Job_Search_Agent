@@ -88,30 +88,36 @@ def title_matches_target_role(job_title, target_roles):
     )
 
 
-def extract_minimum_years_experience(job):
-    """Return the clearest minimum years-of-experience requirement, if stated."""
+def extract_experience_requirement(job):
+    """Return (minimum_years, maximum_years) for explicit experience requirements."""
     text = normalize_text(job.get("description"))
     if not text:
-        return None
+        return None, None
 
-    patterns = [
+    # Explicit ranges: 0-3 years, 1 to 3 years, 2–4 years, etc.
+    range_pattern = (
+        r"(\d+)\s*(?:-|–|—|to)\s*(\d+)\s*years?"
+        r"(?:\s+of)?(?:\s+(?:relevant|professional|work|finance|financial|related))?"
+        r"\s*(?:experience)?"
+    )
+    ranges = [(int(a), int(b)) for a, b in re.findall(range_pattern, text)]
+    if ranges:
+        # Use the strictest explicit range found in the posting.
+        return max(a for a, _ in ranges), max(b for _, b in ranges)
+
+    minimum_patterns = [
         r"(?:minimum(?:\s+of)?|at\s+least|requires?|required|have)\s+(\d+)\+?\s*years?",
-        r"(\d+)\+\s*years?\s+(?:of\s+)?(?:relevant|professional|work|finance|financial|related)?\s*experience",
-        r"(\d+)\s*(?:-|–|to)\s*\d+\s*years?\s+(?:of\s+)?(?:relevant|professional|work|finance|financial|related)?\s*experience",
+        r"(\d+)\+\s*years?(?:\s+of)?(?:\s+(?:relevant|professional|work|finance|financial|related))?\s*(?:experience)?",
     ]
     values = []
-    for pattern in patterns:
+    for pattern in minimum_patterns:
         values.extend(int(x) for x in re.findall(pattern, text))
-    return min(values) if values else None
+
+    return (max(values), None) if values else (None, None)
 
 
 def clearly_too_senior(job, profile=None):
-    """
-    Hard-reject clearly senior roles while allowing realistic professional hiring.
-
-    Analyst/associate roles with 0-3 years remain eligible.  Roles explicitly
-    requiring 4+ years are rejected by default and the threshold is configurable.
-    """
+    """Reject senior titles or experience requirements outside the 0-3 year target."""
     title = normalize_text(job.get("title"))
 
     senior_title_terms = [
@@ -122,13 +128,45 @@ def clearly_too_senior(job, profile=None):
     if any(term in title for term in senior_title_terms):
         return True
 
-    threshold = 4
-    if profile:
-        threshold = int(profile.get("search", {}).get("hard_reject_years_experience", 4))
+    minimum_years, maximum_years = extract_experience_requirement(job)
 
-    minimum_years = extract_minimum_years_experience(job)
-    return minimum_years is not None and minimum_years >= threshold
+    # Reject explicit ranges that extend beyond 3 years, e.g. 2-4 or 3-5.
+    if maximum_years is not None and maximum_years > 3:
+        return True
 
+    # Reject open-ended requirements beginning at 4+ years.
+    if minimum_years is not None and minimum_years >= 4:
+        return True
+
+    return False
+
+
+def excluded_sensitive_industry(job):
+    """Reject defense/military/weapons/nuclear roles; commercial aerospace alone is allowed."""
+    text = normalize_text(
+        f"{job.get('company', '')} {job.get('title', '')} {job.get('description', '')}"
+    )
+    sensitive_terms = [
+        "defense technology", "defense tech", "defense contractor",
+        "defence technology", "defence contractor",
+        "military technology", "military systems", "military contractor",
+        "weapons systems", "weapon systems", "weapons technology", "munitions",
+        "nuclear energy", "nuclear power", "nuclear reactor",
+        "nuclear engineering", "nuclear technology", "nuclear weapons",
+    ]
+    return any(term in text for term in sensitive_terms)
+
+
+def requires_immediate_start(job):
+    """Reject postings that explicitly require an immediate/ASAP start."""
+    text = normalize_text(f"{job.get('title', '')} {job.get('description', '')}")
+    immediate_start_terms = [
+        "immediate start", "start immediately", "starting immediately",
+        "available immediately", "immediate availability", "immediately available",
+        "asap start", "start asap", "start as soon as possible",
+        "immediate hire", "hiring immediately",
+    ]
+    return any(term in text for term in immediate_start_terms)
 
 def job_type_matches(job, profile):
     """
@@ -345,7 +383,13 @@ def filter_job(job, profile):
         return False, "Explicitly does not sponsor"
 
     if clearly_too_senior(job, profile):
-        return False, "Clearly too senior"
+        return False, "Experience requirement outside 0-3 year target"
+
+    if excluded_sensitive_industry(job):
+        return False, "Excluded sensitive industry"
+
+    if requires_immediate_start(job):
+        return False, "Immediate-start role"
 
     if not title_matches_target_role(
         job.get("title"),
